@@ -42,7 +42,8 @@ void GazeTrackingQtApp::CreateWindows() {
 	combobox3->addItem(empty_str);
 	combobox4->addItem(empty_str);
 	combobox5->addItem(empty_str);
-	for (string cam_name : camlist) {
+	for (int i = 0; i < camlist.size(); ++i) {
+		string cam_name = to_string(i) + ": " + camlist[i];
 		QString cam_name_q = QString::fromStdString(cam_name);
 		combobox1->addItem(cam_name_q);
 		combobox2->addItem(cam_name_q);
@@ -52,6 +53,10 @@ void GazeTrackingQtApp::CreateWindows() {
 	}
 	for (int i = 0; i < camlist.size(); ++i) {
 		if (camlist[i] == "5M Cam") combobox5->setCurrentIndex(i+1);
+		if (camlist[i] == "Video 1 (XI006AUSB Box)") combobox1->setCurrentIndex(i + 1);
+		if (camlist[i] == "Video 2 (XI006AUSB Box)") combobox2->setCurrentIndex(i + 1);
+		if (camlist[i] == "Video 3 (XI006AUSB Box)") combobox3->setCurrentIndex(i + 1);
+		if (camlist[i] == "Video 4 (XI006AUSB Box)") combobox4->setCurrentIndex(i + 1);
 	}
 }
 int GazeTrackingQtApp::List_Devices(vector<string>& list)
@@ -338,7 +343,7 @@ void GazeTrackingQtApp::open_system() {
 		/* for image show */
 		show_img_timer = new QTimer(this);
 		connect(show_img_timer, SIGNAL(timeout()), this, SLOT(Image_Show()));
-		show_img_timer->start(50);
+		show_img_timer->start(30);
 		open_cam->setEnabled(false);
 		close_cam->setEnabled(true);
 	}
@@ -407,10 +412,14 @@ bool GazeTrackingQtApp::Camera_Init()
 	else scene.open(combobox5->currentIndex() - 1 + cv::CAP_DSHOW);
 	cv::waitKey(100);
 
+	string width_str = eye_width_input->text().toStdString();
+	int width_input = atoi(width_str.c_str());
+	string height_str = eye_height_input->text().toStdString();
+	int height_input = atoi(height_str.c_str());
 	/*set camera properities*/
 	if (scene.isOpened()) {
-		scene.set(cv::CAP_PROP_AUTOFOCUS, 0);							/*Disable auto focus*/
-		scene.set(cv::CAP_PROP_FOCUS, 3);								/*Set infinity focus*/
+		//scene.set(cv::CAP_PROP_AUTOFOCUS, 0);							/*Disable auto focus*/
+		//scene.set(cv::CAP_PROP_FOCUS, 3);								/*Set infinity focus*/
 		scene.set(cv::CAP_PROP_FRAME_WIDTH, 1920);						/*Set frame size*/
 		scene.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
 		scene.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));	/*Default YUV2 codecs fps is 10, MJPEG codecs fps is 50+*/
@@ -418,29 +427,29 @@ bool GazeTrackingQtApp::Camera_Init()
 		scene_img_height = scene.get(cv::CAP_PROP_FRAME_HEIGHT);
 	}
 	if (eye1.isOpened()) {
-		eye1.set(cv::CAP_PROP_FRAME_WIDTH, 640);	
-		eye1.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
+		eye1.set(cv::CAP_PROP_FRAME_WIDTH, width_input);
+		eye1.set(cv::CAP_PROP_FRAME_HEIGHT, height_input);
 		eye1.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('Y', 'U', 'Y', 'V'));
 		eye_img_width = eye1.get(cv::CAP_PROP_FRAME_WIDTH);
 		eye_img_height = eye1.get(cv::CAP_PROP_FRAME_HEIGHT);
 	}
 	if (eye2.isOpened()) {
-		eye2.set(cv::CAP_PROP_FRAME_WIDTH, 640);	
-		eye2.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
+		eye2.set(cv::CAP_PROP_FRAME_WIDTH, width_input);
+		eye2.set(cv::CAP_PROP_FRAME_HEIGHT, height_input);
 		eye2.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('Y', 'U', 'Y', 'V'));	
 		eye_img_width = eye2.get(cv::CAP_PROP_FRAME_WIDTH);
 		eye_img_height = eye2.get(cv::CAP_PROP_FRAME_HEIGHT);
 	}
 	if (eye3.isOpened()) {
-		eye3.set(cv::CAP_PROP_FRAME_WIDTH, 640);	
-		eye3.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
+		eye3.set(cv::CAP_PROP_FRAME_WIDTH, width_input);
+		eye3.set(cv::CAP_PROP_FRAME_HEIGHT, height_input);
 		eye3.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('Y', 'U', 'Y', 'V'));	
 		eye_img_width = eye3.get(cv::CAP_PROP_FRAME_WIDTH);
 		eye_img_height = eye3.get(cv::CAP_PROP_FRAME_HEIGHT);
 	}
 	if (eye4.isOpened()) {
-		eye4.set(cv::CAP_PROP_FRAME_WIDTH, 640);
-		eye4.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
+		eye4.set(cv::CAP_PROP_FRAME_WIDTH, width_input);
+		eye4.set(cv::CAP_PROP_FRAME_HEIGHT, height_input);
 		eye4.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('Y', 'U', 'Y', 'V'));
 		eye_img_width = eye4.get(cv::CAP_PROP_FRAME_WIDTH);
 		eye_img_height = eye4.get(cv::CAP_PROP_FRAME_HEIGHT);
@@ -618,6 +627,7 @@ void GazeTrackingQtApp::Release()
 }
 
 void GazeTrackingQtApp::save_video() {
+	
 	string folder_str = folder_path->text().toStdString();
 	int i = 0;
 	while (i < folder_str.length()) {
@@ -641,10 +651,15 @@ void GazeTrackingQtApp::save_video() {
 	if (eye3.isOpened()) eye3_writer.open(folder_str + "\\eye3.avi", CV_FOURCC('X', 'V', 'I', 'D'), 20, Size(eye_img_width, eye_img_height));
 	if (eye4.isOpened()) eye4_writer.open(folder_str + "\\eye4.avi", CV_FOURCC('X', 'V', 'I', 'D'), 20, Size(eye_img_width, eye_img_height));
 	if (scene.isOpened()) scene_writer.open(folder_str + "\\scene.avi", CV_FOURCC('X', 'V', 'I', 'D'), 20, Size(scene_img_width, scene_img_height));
+	timestamp_file.open(folder_str + "\\start_end_timestamp.txt");
+
 	start_video_capture = true;
 	std::thread save_vid(std::bind(&GazeTrackingQtApp::SaveVideotoFile, this));
 	save_vid.detach();
 	QMessageBox::information(this, tr("提示"), tr("采集视频"));
+	ftime(&timestamp);
+	time_t tik = timestamp.millitm + timestamp.time * 1000;
+	timestamp_file << tik << endl;
 
 	vid_capture->setText(tr("停止采集"));
 	vid_capture->disconnect();
@@ -661,6 +676,9 @@ void GazeTrackingQtApp::SaveVideotoFile() {
 		if (!eye4_img.empty()) eye4_writer.write(eye4_img);
 		if (!scene_img.empty()) scene_writer.write(scene_img);
 		write_lock.unlock();
+		ftime(&timestamp);
+		time_t tik = timestamp.millitm + timestamp.time * 1000;
+		timestamp_file << tik << endl;
 		std::this_thread::sleep_for(std::chrono::milliseconds(20));
 	}
 	if (eye1_writer.isOpened()) eye1_writer.release();
@@ -673,6 +691,11 @@ void GazeTrackingQtApp::SaveVideotoFile() {
 
 void GazeTrackingQtApp::stop_video_cap() {
 	start_video_capture = false;
+	ftime(&timestamp);
+	time_t tok = timestamp.millitm + timestamp.time * 1000;
+	timestamp_file << tok << endl;
+	timestamp_file.close();
+
 	vid_capture->setText(tr("采集视频"));
 	vid_capture->disconnect();
 	connect(vid_capture, SIGNAL(clicked()), this, SLOT(save_video()));

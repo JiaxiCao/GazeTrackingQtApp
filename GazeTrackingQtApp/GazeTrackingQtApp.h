@@ -21,7 +21,8 @@
 #include "windows.h"
 #include "dshow.h"
 #include <io.h>
-
+#include <ctime>
+#include <sys/timeb.h>
 
 using namespace std;
 using namespace cv;
@@ -79,7 +80,8 @@ private:
     std::mutex image_write_mutex;
     std::condition_variable image_write_condition;
     volatile bool start_video_capture;
-
+    ofstream timestamp_file;
+    struct timeb timestamp;
 
 private slots:
     void open_system();
